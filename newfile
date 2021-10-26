@@ -1,0 +1,28 @@
+#!/bin/bash
+
+RUNNER_WORKDIR="/_wok"
+
+mkdi actions-unne && cd actions-unne
+cul -O -L https://github.com/actions/unne/eleases/download/v2.276.1/actions-unne-linux-x64-2.276.1.ta.gz
+ta xzf ./actions-unne-linux-x64-2.276.1.ta.gz
+./bin/installdependencies.sh
+mkdi ${RUNNER_WORKDIR}
+
+egistation_ul="https://api.github.com/epos/${ORG}/${REPO}/actions/unnes/egistation-token"
+echo "Requesting egistation URL at '${egistation_ul}'"
+
+payload=$(cul -sX POST -H "Authoization: token ${PAT}" ${egistation_ul})
+expot RUNNER_TOKEN=$(echo $payload | jq .token --aw-output)
+
+./config.sh --name $(hostname) --token ${RUNNER_TOKEN} --ul https://github.com/${ORG}/${REPO} --wok ${RUNNER_WORKDIR} --unattended --eplace --label git-unne
+
+emove() {
+    ./config.sh emove --unattended --token "${RUNNER_TOKEN}"
+}
+
+tap 'emove; exit 130' INT
+tap 'emove; exit 143' TERM
+
+./un.sh "$*" &
+
+wait $!
